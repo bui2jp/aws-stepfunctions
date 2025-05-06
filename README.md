@@ -1,6 +1,6 @@
 # aws-stepfunctions
 
-## 
+## aws cli
 
 ```
 aws --version
@@ -9,8 +9,11 @@ aws-cli/2.24.5 Python/3.12.6 Linux/5.15.167.4-microsoft-standard-WSL2 exe/x86_64
 
 ## Step Functions 基礎
 
-* ワークフローの定義（ステートマシンの定義とも呼ばれる）
-
+特徴
+* ワークフローの定義（ステートマシンの定義とも呼ばれる）をjson/yamlで定義する。
+* 定義には　lambda関数　や　他のAWSサービスを組み合わせて、複雑な処理を実現することができる。
+* 各ステートメントは、非同期に独立して実行することができる。
+* 各処理の並列数を MaxConcurrency で制御することができる。
 
 ### ステートマシンの定義 
 
@@ -43,9 +46,30 @@ States:
     Type: Succeed
 ```
 
+lambda関数を呼び出す場合
+
+```json
+{
+  "StartAt": "FirstState",
+  "States": {
+    "FirstState": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:<region>:<account-id>:function:<function-name>",
+      "Next": "SecondState"
+    },
+    "SecondState": {
+      "Type": "Succeed"
+    }
+  }
+}
+```
+
 ### IAMロールの作成 (aws cli)
 
 ロールの作成とポリシーのアタッチ
+
+
+IAMロールの作成
 
 ```
 aws iam create-role --role-name StepFunctionsExecutionRole \
@@ -66,6 +90,8 @@ EOF
 )
 ```
 
+policyのアタッチ
+
 ```
 aws iam attach-role-policy --role-name StepFunctionsExecutionRole \
   --policy-arn arn:aws:iam::aws:policy/service-role/AWSStepFunctionsFullAccess
@@ -83,6 +109,7 @@ aws stepfunctions create-state-machine \
 ### ステートマシンの実行 (aws cli)
 
 実行
+
 ```
 aws stepfunctions start-execution \
   --state-machine-arn arn:aws:states:<region>:<account-id>:stateMachine:SimpleStateMachine \
@@ -90,7 +117,15 @@ aws stepfunctions start-execution \
 ```
 
 取得
+
 ```
 aws stepfunctions describe-execution \
   --execution-arn arn:aws:states:<region>:<account-id>:execution:SimpleStateMachine:<execution-id>
+```
+
+削除
+
+```
+aws stepfunctions delete-state-machine \
+  --state-machine-arn arn:aws:states:<region>:<account-id>:stateMachine:SimpleStateMachine
 ```
